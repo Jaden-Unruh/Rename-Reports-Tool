@@ -1,0 +1,37 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" /><title></title></head><body><h1>Rename reports</h1>
+<p>A tool to rename report pdfs to the standard</p>
+<h2>Setup</h2>
+<p>Java SE 17 is required to run this program. An installer for Temurin/OpenJDK 17 should be included with the file, running the installer will open a window guiding you through the installation. Leaving everything as default should work perfectly, just click through the pages. If the installer is not included, it can be downloaded from <a href="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8%2B7/OpenJDK17U-jdk_x64_windows_hotspot_17.0.8_7.msi">here</a>. After installing Temurin/Java 17, the <code>.JAR</code> should run just by double-clicking.</p>
+<h2>GUI and How to Use</h2>
+<p>After double-clicking <code>Rename-Reports.JAR</code>, a window will open with a few prompts. The top of the window will have three lines prompting the user to select input and output directories and a location hierarchy spreadsheet. When the select buttons are clicked, they will open a file selection window.</p>
+<p>The input directory should be a folder containing many directories titled as a site id followed by the site name, for example, “IE001 Ahfachkee Day School”. Site ids must be either IE, IA, or JS followed by 3 numbers. Any folders or files not named to this specification inside the input directory will be ignored. Within each of these site folders should be, among other contents, a folder named EXACTLY “04 Report”. If this is not there, the site directory will be skipped. Within that report folder there should be two folders, one called “Draft” and the other called “Final”. Final will be checked first, if there is any PDF there it will be used, otherwise Draft will be checked and any PDF there will be used.</p>
+<p>The output directory can be any folder. This is where all of the renamed PDFs will be copied to, and where the info text document will be made. Note that if there is a document in output called “rename-info.txt” (immediately within it, not in any sub-directories) it will be deleted and replaced by the info from the current run of this script.</p>
+<p>The Location Hierarchy spreadsheet must be a .xlsx file, .xlsb and other similar formats will not work. This .xlsx file can be obtained by opening a .xlsb or other spreadsheet format in excel and exporting it. I don’t know where the spreadsheet comes from, it was provided to me when I was writing this code, but it must have, starting in row 7, site ids in column D, site descriptions in column E, location numbers in column F, and Maximo ids in column I.</p>
+<p>After all three files have been selected, press the ‘Run’ button to start the script. If things haven’t been selected properly, an info text box will appear at the bottom of the window prompting file selection.
+When run, the mentioned info text box will display what the script is currently doing, and, when it’s done, it will direct users to the document <code>rename-info.txt</code> for more information.</p>
+<p><code>rename-info.txt</code> is a brief text document created every time the script is run. If any potential errors arose during the running of the script, they will be mentioned here. For example, if multiple pdfs were found in the same directory, the script will use the first one but will mention that it did so here, or if a site directory doesn’t have a “04 Report” folder that will be mentioned here, too.</p>
+<h2>Troubleshooting</h2>
+<blockquote>
+<p><code>Run</code> isn’t doing anything</p>
+</blockquote>
+<p>Ensure that you’ve selected two directories and a *.xlsx file. Spreadsheets of a different type (.xlsb, .xls, .csv, etc.) will not work.</p>
+<hr />
+<blockquote>
+<p>Certain PDFs are being skipped</p>
+</blockquote>
+<p>Ensure that the file structure matches exactly as described above. Files and folders not placed in the correct places will be ignored. Consult <code>rename-info.txt</code> to see what’s been skipped.</p>
+<hr />
+<blockquote>
+<p>The year on some files is incorrect</p>
+</blockquote>
+<p>This is possible. It worked in all the files I tested the script on, but because I’m using Optical Character Recognition (OCR) to pull the year off the first page of the report, the algorithm may not work perfectly and may, very occasionally, read some characters wrong. Check through the reports after the script is done to see if anything is obviously wrong.</p>
+<h2>Details of what it does</h2>
+<p>First, the script runs some initialization steps: creating <code>rename-info.txt</code>, opening the spreadsheet, and starting Tesseract. Then, it will navigate through the <code>input</code> directory, finding reports in ‘<em>siteId siteName</em>/04 Reports/Final’ or ‘<em>siteId siteName</em>/04 Reports/Draft’. For each Report, the script will find the site ID within the location hierarchy spreadsheet and pull, from that row of the spreadsheet, the location number, maximo id, and site name. Then the script will render the first page of the PDF and run Tesseract, an optical character recognition program, on it. That algorithm will find all the text on the first page, from which the year is pulled. With all this information, the script will copy the report to a new file in the format <code>YEAR_SITE-ID_LOCATION#_MAXIMO-ID_Sub-SiteReport_SITE-NAME.pdf</code>, for example, <code>2021_IE009_N32-04_AB900066_Sub-SiteReport_BECLABITO DAY SCHOOL.pdf</code>.</p>
+<h2>Changing the code</h2>
+<p>The <code>.JAR</code> file is compiled and compressed, meaning it is not human-readable code. If you want to change how the program works, add new features, or anything else, I have uploaded the program files to a github repository uncompiled. That github repository will also include this readme.md (and an HTML version in case you can’t open the .md file), as well as the compiled <code>.JAR</code>.</p>
+<p>The mentioned github repo is <a href="https://github.com/Jaden-Unruh/Rename-Reports-Tool">here</a>.</p>
+<h2>In the Github</h2>
+<p>The folder <code>report.renamer</code> contains all of the java code as well as associated data and resource files. It does not contain all the dependency folders, though it does have maven references to them within <code>pom.xml</code> so they can be installed by other users.</p>
+<p>All of the contents of <code>report.renamer</code> are bundled within <code>Report Renamer.JAR</code>. Users interested only in running the script and not editing it in any way should download just this JAR file.</p>
+<p>The other two files within the github are this <code>README.md</code> and an equivalent <code>README.html</code>. They are identical, just different file types in case a user can’t open a .md file.</p>
+</body></html>
