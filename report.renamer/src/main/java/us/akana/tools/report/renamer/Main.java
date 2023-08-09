@@ -14,6 +14,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +22,7 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 
 import org.apache.commons.io.FileUtils;
@@ -135,6 +137,17 @@ public class Main {
 							run.setEnabled(true);
 							return true;
 						}
+						
+						protected void done() {
+							try {
+								get();
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							} catch (ExecutionException e) {
+								e.getCause().printStackTrace();
+								JOptionPane.showMessageDialog(options, String.format("Unexpected Problem:\n%s", e.getCause().toString()), "Error", JOptionPane.ERROR_MESSAGE);
+							}
+						}
 					};
 					run.setEnabled(false);
 					sw.execute();
@@ -207,7 +220,7 @@ public class Main {
 							if (firstFolderList.length > 0) {
 								if (firstFolderList.length > 1)
 									writeToInfo.write(String.format(
-											"Multiple PDFs found. Using the first, confirm this is correct. Site: %s.\n",
+											"- Multiple PDFs found. Using the first, confirm this is correct. Site: %s.\n",
 											IE_NUM));
 								copyFile(firstFolderList[0], IE_NUM, output);
 							} else {
@@ -216,22 +229,22 @@ public class Main {
 								if (secondFolderList.length > 0) {
 									if (secondFolderList.length > 1)
 										writeToInfo.write(String.format(
-												"Multiple PDFs found. Using the first, confirm this is correct. Site: %s.\n",
+												"- Multiple PDFs found. Using the first, confirm this is correct. Site: %s.\n",
 												IE_NUM));
 									copyFile(secondFolderList[0], IE_NUM, output);
 								} else
-									writeToInfo.write(String.format("Final and draft folder both missing pdf: %s. Skipping...\n",
+									writeToInfo.write(String.format("- Final and draft folder both missing pdf: %s. Skipping...\n",
 											locContents[0]));
 							}
 						} else
-							writeToInfo.write(String.format("Reports doesn't contain Draft and Final directories: %s. Skipping...\n",
+							writeToInfo.write(String.format("- Reports doesn't contain Draft and Final directories: %s. Skipping...\n",
 									locContents[0]));
 					} else
-						writeToInfo.write(String.format("Directory missing reports directory: %s. Skipping...\n", file));
+						writeToInfo.write(String.format("- Directory missing reports directory: %s. Skipping...\n", file));
 				} else
-					writeToInfo.write(String.format("Found foreign directory in input folder: %s. Skipping...\n", file));
+					writeToInfo.write(String.format("- Found foreign directory in input folder: %s. Skipping...\n", file));
 			} else
-				writeToInfo.write(String.format("Found non-directory item in input folder: %s. Skipping...\n", file));
+				writeToInfo.write(String.format("- Found non-directory item in input folder: %s. Skipping...\n", file));
 		}
 	}
 
@@ -264,14 +277,28 @@ public class Main {
 				activePDF.close();
 				Matcher match = YEAR_REGEX.matcher(pg1Text);
 				match.find();
-				year = match.group(2);
-
-				FileUtils.copyFile(file,
-						new File(String.format("%s\\%s_%s_%s_%s_Sub-SiteReport_%s.pdf", output.getAbsolutePath(), year,
-								siteId, locId, maximoId, siteName.replace("/", "-").replace("\\", "-"))));
+				try {
+					year = match.group(2);
+	
+					FileUtils.copyFile(file,
+							new File(String.format("%s\\%s_%s_%s_%s_Sub-SiteReport_%s.pdf", output.getAbsolutePath(), year,
+									siteId, locId, maximoId, siteName.replace("/", "-").replace("\\", "-"))));
+				} catch (IllegalStateException e) {
+					year = "YYYY";
+					
+					FileUtils.copyFile(file,
+							new File(String.format("%s\\MISSING YEARS\\%s_%s_%s_%s_Sub-SiteReport_%s.pdf", output.getAbsolutePath(), year,
+									siteId, locId, maximoId, siteName.replace("/", "-").replace("\\", "-"))));
+					
+					try {
+						writeToInfo.write(String.format("- Tesseract couldn't find a year on page one of %s for site %s. It's been copied to MISSING FILES with the remainder of the data, input the year manually.\n", file.getName(), site));
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
 			} catch (IOException e) {
 				try {
-					writeToInfo.write(String.format("Error loading PDF for site %s, skipping...", site));
+					writeToInfo.write(String.format("- Error loading PDF for site %s, skipping...", site));
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -279,7 +306,7 @@ public class Main {
 			}
 		} else
 			try {
-				writeToInfo.write(String.format("%s not found in sheet, skipping report...\n", site));
+				writeToInfo.write(String.format("- %s not found in sheet, skipping report...\n", site));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
