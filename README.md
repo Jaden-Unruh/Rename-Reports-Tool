@@ -15,6 +15,8 @@ After all three files have been selected, press the 'Run' button to start the sc
 When run, the mentioned info text box will display what the script is currently doing, and, when it's done, it will direct users to the document `rename-info.txt` for more information.
 
 `rename-info.txt` is a brief text document created every time the script is run. If any potential errors arose during the running of the script, they will be mentioned here. For example, if multiple pdfs were found in the same directory, the script will use the first one but will mention that it did so here, or if a site directory doesn't have a "04 Report" folder that will be mentioned here, too.
+
+`MISSING YEARS` is a directory created in the user's output directory if Tesseract can't find a year on the first page of a report. In testing, this was about 10-15% of files. These will be copied to `MISSING YEARS`, renamed with 'YYYY' in place of a year. The user can then go and manually add the years in. Not perfect, but the best I could come up with.
 ## Troubleshooting
 > `Run` isn't doing anything
 
@@ -28,7 +30,12 @@ Ensure that the file structure matches exactly as described above. Files and fol
 ---
 > The year on some files is incorrect
 
-This is possible. It worked in all the files I tested the script on, but because I'm using Optical Character Recognition (OCR) to pull the year off the first page of the report, the algorithm may not work perfectly and may, very occasionally, read some characters wrong. Check through the reports after the script is done to see if anything is obviously wrong.
+This is possible. Because I'm using Optical Character Recognition (OCR) to pull the year off the first page of the report, the algorithm may not work perfectly and may, very occasionally, read some characters wrong. Ideally, it will catch its error, and you'll be one troubleshooting option down, but it's possible, for example, that it reads '2018' as '2016', and there's no way it can catch that. Hopefully, that never happens. In all the test files I ran this on (~160 or so), it didn't seem to happen.
+
+---
+> What's this `MISSING YEARS` folder?
+
+Tesseract, the OCR library I'm using to pull years from the first page of the PDFs, isn't perfect. Sometimes it can't find a year. In this case, the program will copy that file, with the rest of the information it can get, into `MISSING YEARS`, and the user can manually open the PDF, check the first page, and fix that.
 ## Details of what it does
 First, the script runs some initialization steps: creating `rename-info.txt`, opening the spreadsheet, and starting Tesseract. Then, it will navigate through the `input` directory, finding reports in '*siteId siteName*/04 Reports/Final' or '*siteId siteName*/04 Reports/Draft'. For each Report, the script will find the site ID within the location hierarchy spreadsheet and pull, from that row of the spreadsheet, the location number, maximo id, and site name. Then the script will render the first page of the PDF and run Tesseract, an optical character recognition program, on it. That algorithm will find all the text on the first page, from which the year is pulled. With all this information, the script will copy the report to a new file in the format `YEAR_SITE-ID_LOCATION#_MAXIMO-ID_Sub-SiteReport_SITE-NAME.pdf`, for example, `2021_IE009_N32-04_AB900066_Sub-SiteReport_BECLABITO DAY SCHOOL.pdf`.
 ## Changing the code
