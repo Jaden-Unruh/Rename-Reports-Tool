@@ -10,7 +10,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -189,9 +191,13 @@ public class Main {
 		tesseract = new Tesseract();
 		tesseract.setLanguage("eng");
 		try {
-			Path dataDirectory = Paths.get(ClassLoader.getSystemResource("data").toURI());
+			//Can't directly access local resources when packaged into JAR, have to make temp file and read from there
+			//Side note - this caused like 2 hours of headache
+			Path dataDirectory = Files.createTempDirectory("data");
+			InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("data/eng.traineddata");
+			Files.copy(stream, new File(dataDirectory.toString() + "/eng.traineddata").toPath());
 			tesseract.setDatapath(dataDirectory.toString());
-		} catch (URISyntaxException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
